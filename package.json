@@ -1,14 +1,14 @@
 {
-  "name": "p2pspider",
+  "name": "sp2der",
   "description": "DHT Spider + BitTorrent Client = P2P Spider",
-  "version": "0.0.8",
+  "version": "1.0.0",
   "author": {
-    "name": "Fuck-You-GFW"
+    "name": "flame"
   },
-  "repository": "https://github.com/Fuck-You-GFW/p2pspider",
+  "repository": "https://github.com/yaolynzc/sp2der",
   "main": "lib/index.js",
   "bugs": {
-    "url": "https://github.com/Fuck-You-GFW/p2pspider/issues"
+    "url": ""
   },
   "scripts": {},
   "dependencies": {
