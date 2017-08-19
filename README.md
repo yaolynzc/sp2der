@@ -9,10 +9,8 @@
 
 ## 开发框架
 
-NodeJS    
+NodeJS
 MongoDB  
-MySQL  
-Redis  
 
 ## License
 MIT  
