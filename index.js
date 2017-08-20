@@ -42,7 +42,7 @@ p2p.on('metadata', function (metadata) {
             var parsedTorrent =  torrentParser.decodeTorrentFile(torrentFilePathSaveTo);
             // console.log("Name:" + parsedTorrent.name);
             
-            /// 定义mysql数据对象
+            // 定义mysql数据对象
             var torlists = {
                 ID: parsedTorrent.infoHash,
                 NAME: parsedTorrent.name,
