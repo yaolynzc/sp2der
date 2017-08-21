@@ -8,13 +8,20 @@ var bencode = require('bencode');
 var P2PSpider = require('./lib');
 var torrentParser = require('torrent-parser');
 
-// 1.引入redis模块
-var redis = require("redis"),
-    client = redis.createClient();
-// 监听数据库错误信息
-client.on("error", function (err) {
-    console.log("Error " + err);
-});
+// 1.引入mongoose模块
+var mongoose = require('mongoose');
+// 2.设置mongoose的promise，连接服务器
+mongoose.Promise = global.Promise;
+var db = mongoose.connect('mongodb://admin:flame@127.0.0.1:27017/sp2web',{useMongoClient: true});
+// 3.创建模型
+var listModel = mongoose.model('torlist',
+      {
+        name:String,
+        file:String,
+        memo:JSON,
+        ctime:Date
+      }
+    );
 
 var p2p = P2PSpider({
     nodesMaxSize: 400,
@@ -40,28 +47,22 @@ p2p.on('metadata', function (metadata) {
             var parsedTorrent =  torrentParser.decodeTorrentFile(torrentFilePathSaveTo);
             // console.log("Name:" + parsedTorrent.name);
             
-            // 定义mysql数据对象
-            var torlists = {
-                ID: parsedTorrent.infoHash,
-                NAME: parsedTorrent.name,
-                FILES: JSON.stringify(parsedTorrent.files)
-            };
-            
-            client.multi([
-                ["incr", "id"]
-            ]).exec(function (error, res) {
-                console.log(res[0]);
-                // 保存对象
-                if (res.length > 0) {
-                    client.hmset(torlists.ID, torlists, function (error, res) {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            // console.log(res);
-                            client.sadd("torlists", torlists.ID);
-                        }
-                    });
+            // 定义mongoose实例对象
+            var list = new listModel({
+                name:parsedTorrent.name,
+                file: parsedTorrent.infoHash,
+                memo: parsedTorrent.files,
+                ctime: Date.now()
+            });
+
+            // 保存对象
+            list.save(function(err, res) {
+                // 如果错误，打印错误信息
+                if (err) {
+                console.log(err);
                 }
+                // 返回插入的数据对象
+                // console.log(res);
             });
         }
     });

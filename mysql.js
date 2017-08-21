@@ -8,13 +8,15 @@ var bencode = require('bencode');
 var P2PSpider = require('./lib');
 var torrentParser = require('torrent-parser');
 
-// 1.引入redis模块
-var redis = require("redis"),
-    client = redis.createClient();
-// 监听数据库错误信息
-client.on("error", function (err) {
-    console.log("Error " + err);
-});
+// 1.引入mysql模块
+var mysql = require('mysql');
+// 2.设置mysql连接参数
+var connection = mysql.createConnection({
+    host     : '127.0.0.1',
+    user     : 'root',
+    password : 'flame',
+    database : 'sp2web'
+  });
 
 var p2p = P2PSpider({
     nodesMaxSize: 400,
@@ -47,22 +49,10 @@ p2p.on('metadata', function (metadata) {
                 FILES: JSON.stringify(parsedTorrent.files)
             };
             
-            client.multi([
-                ["incr", "id"]
-            ]).exec(function (error, res) {
-                console.log(res[0]);
-                // 保存对象
-                if (res.length > 0) {
-                    client.hmset(torlists.ID, torlists, function (error, res) {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            // console.log(res);
-                            client.sadd("torlists", torlists.ID);
-                        }
-                    });
-                }
-            });
+            var query = connection.query('INSERT INTO torlists SET ?', torlists, function (error, results, fields) {
+                if (error) throw error;
+                // console.log(fields);
+              });
         }
     });
 });
