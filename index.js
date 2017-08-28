@@ -8,13 +8,15 @@ var bencode = require('bencode');
 var P2PSpider = require('./lib');
 var torrentParser = require('torrent-parser');
 
-// 1.引入redis模块
-var redis = require("redis"),
-    client = redis.createClient();
-// 监听数据库错误信息
-client.on("error", function (err) {
-    console.log("Error " + err);
-});
+// 1.引入mysql模块
+var mysql = require('mysql');
+// 2.设置mysql连接参数
+var connection = mysql.createConnection({
+    host     : '127.0.0.1',
+    user     : 'root',
+    password : 'flame',
+    database : 'sp2web'
+  });
 
 var p2p = P2PSpider({
     nodesMaxSize: 400,
@@ -40,29 +42,29 @@ p2p.on('metadata', function (metadata) {
             var parsedTorrent =  torrentParser.decodeTorrentFile(torrentFilePathSaveTo);
             // console.log("Name:" + parsedTorrent.name);
             
-            // 定义mysql数据对象
-            var torlists = {
-                ID: parsedTorrent.infoHash,
-                NAME: parsedTorrent.name,
-                FILES: JSON.stringify(parsedTorrent.files)
-            };
+            var filelist = JSON.stringify(parsedTorrent.files);
+            // 常见几种视频文件类型的检测
+            var videoRegEx = new RegExp("^.+\.(mkv)|(mp4)|(avi)|(rmvb)|(wmv)|(rm)|(mpeg)|(ts)$");
             
-            client.multi([
-                ["incr", "id"]
-            ]).exec(function (error, res) {
-                console.log(res[0]);
-                // 保存对象
-                if (res.length > 0) {
-                    client.hmset(torlists.ID, torlists, function (error, res) {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            // console.log(res);
-                            client.sadd("torlists", torlists.ID);
-                        }
+            // 如果包含以上8种视频文件，则保存
+            if (videoRegEx.test(filelist.toLowerCase())) {
+                // 定义mysql数据对象
+                var torlists = {
+                    ID: parsedTorrent.infoHash,
+                    NAME: parsedTorrent.name,
+                    FILES: JSON.stringify(filelist)
+                };
+
+                var query = connection.query('INSERT INTO torlists SET ?', torlists, function (error, results, fields) {
+                    if (error) throw error;
+                    // console.log(fields);
+                    
+                    // 删除非以上8种视频文件的种子
+                    fs.unlink(torrentFilePathSaveTo,function(error){
+                        if(error) throw error;
                     });
-                }
-            });
+                });
+            }
         }
     });
 });
