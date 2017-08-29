@@ -6,7 +6,7 @@ var path = require('path');
 
 var bencode = require('bencode');
 var P2PSpider = require('./lib');
-var torrentParser = require('./lib/torrent-parser');
+var torrentParser = require('./lib/torrent-parser');    // 自行修改了一个throw：25
 var torlistarr = [];
 
 // 1.引入mysql模块
@@ -39,45 +39,43 @@ p2p.on('metadata', function (metadata) {
         if (err) {
             return console.error(err);
         }else{
-            var parsedTorrent =  torrentParser.decodeTorrentFile(torrentFilePathSaveTo);
-            // console.log("Name:" + parsedTorrent.name);
-            // 如果解析到正确格式的tts文件，则执行以下保存操作
-            if (parsedTorrent) {
-                var filelist = JSON.stringify(parsedTorrent.files);
-                // 常见几种文件类型的检测
-                var videoRegEx = new RegExp("^.+\.(mkv)|(mp4)|(avi)|(rmvb)|(wmv)$");
+            if (fs.existsSync(torrentFilePathSaveTo)) {
+                var parsedTorrent = torrentParser.decodeTorrentFile(torrentFilePathSaveTo);
+                // console.log("Name:" + parsedTorrent.name);
+                // 如果解析到正确格式的tts文件，则执行以下保存操作
+                if (parsedTorrent) {
+                    var filelist = JSON.stringify(parsedTorrent.files);
+                    // 常见几种文件类型的检测
+                    var videoRegEx = new RegExp("^.+\.(mkv)|(mp4)|(avi)|(rmvb)|(wmv)$");
 
-                // 如果包含以上5种文件类型，则保存
-                if (videoRegEx.test(filelist.toLowerCase())) {
-                    // // 定义mysql数据对象
-                    // var torlists = {
-                    //     ID: parsedTorrent.infoHash,
-                    //     NAME: parsedTorrent.name,
-                    //     FILES: filelist
-                    // };
+                    // 如果包含以上5种文件类型，则保存
+                    if (videoRegEx.test(filelist)) {
+                        // 定义mysql数据数组
+                        var torlist = [parsedTorrent.infoHash, parsedTorrent.name, filelist];
+                        torlistarr.push(torlist);
+                        console.log(metadata.infohash + " has saved.");
+                        console.log(torlistarr.length);
 
-                    // var query = connection.query('INSERT INTO torlists SET ?', torlists, function (error, results, fields) {
-                    //     if (error) throw error;
-                    // // console.log(fields);
-                    // });
-                    
-                    var torlist = [parsedTorrent.infoHash, parsedTorrent.name, filelist];
-                    torlistarr.push(torlist);
-                    console.log(metadata.infohash + " has saved.");
-                    console.log(torlistarr.length);
-
-                    // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-                    if (torlistarr.length === 300) {
-                        var query = connection.query('INSERT INTO torlists(ID,NAME,FILES) VALUES ?', [torlistarr], function (error, rows, fields) {
-                            if (error) throw error;
-                            torlistarr = [];
+                        // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
+                        if (torlistarr.length === 300) {
+                            var query = connection.query('INSERT INTO torlists(ID,NAME,FILES) VALUES ?', [torlistarr], function (error, rows, fields) {
+                                // if (error) throw error;
+                                if(error){
+                                    console.log("invalid files string");
+                                }else{
+                                    torlistarr = [];
+                                }
+                            });
+                        }
+                    } else {
+                        // 删除非以上5种类型的文件
+                        fs.unlink(torrentFilePathSaveTo, function (error) {
+                            // if (error) throw error;
+                            if(error){
+                                console.log('tts file delete error!');
+                            }
                         });
                     }
-                } else {
-                    // 删除非以上5种类型的文件
-                    fs.unlink(torrentFilePathSaveTo, function (error) {
-                        if (error) throw error;
-                    });
                 }
             }
         } 
