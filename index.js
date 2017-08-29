@@ -6,8 +6,8 @@ var path = require('path');
 
 var bencode = require('bencode');
 var P2PSpider = require('./lib');
-var torrentParser = require('torrent-parser');
-var torlistsarr = [];
+var torrentParser = require('./lib/torrent-parser');
+var torlistarr = [];
 
 // 1.引入mysql模块
 var mysql = require('mysql');
@@ -39,44 +39,48 @@ p2p.on('metadata', function (metadata) {
         if (err) {
             return console.error(err);
         }else{
-            console.log(metadata.infohash + " has saved.");
             var parsedTorrent =  torrentParser.decodeTorrentFile(torrentFilePathSaveTo);
             // console.log("Name:" + parsedTorrent.name);
-            
-            var filelist = JSON.stringify(parsedTorrent.files);
-            // 常见几种文件类型的检测
-            var videoRegEx = new RegExp("^.+\.(mkv)|(mp4)|(avi)|(rmvb)|(wmv)|(rm)|(mpeg)|(ts)$");
-            
-            // 如果包含以上8种文件类型，则保存
-            if (videoRegEx.test(filelist.toLowerCase())) {
-                // // 定义mysql数据对象
-                // var torlists = {
-                //     ID: parsedTorrent.infoHash,
-                //     NAME: parsedTorrent.name,
-                //     FILES: filelist
-                // };
+            // 如果解析到正确格式的tts文件，则执行以下保存操作
+            if (parsedTorrent) {
+                var filelist = JSON.stringify(parsedTorrent.files);
+                // 常见几种文件类型的检测
+                var videoRegEx = new RegExp("^.+\.(mkv)|(mp4)|(avi)|(rmvb)|(wmv)$");
 
-                // var query = connection.query('INSERT INTO torlists SET ?', torlists, function (error, results, fields) {
-                //     if (error) throw error;
-                // // console.log(fields);
-                // });
+                // 如果包含以上5种文件类型，则保存
+                if (videoRegEx.test(filelist.toLowerCase())) {
+                    // // 定义mysql数据对象
+                    // var torlists = {
+                    //     ID: parsedTorrent.infoHash,
+                    //     NAME: parsedTorrent.name,
+                    //     FILES: filelist
+                    // };
 
-                var torlists = [parsedTorrent.infoHash,parsedTorrent.name,filelist];
-                torlistsarr.push(torlists);
-                // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-                if(torlistsarr.length == 300){
-                    var query = connection.query('INSERT INTO torlists(ID,NAME,FILES) VALUES ?', [torlistsarr], function (error, rows, fields) {
+                    // var query = connection.query('INSERT INTO torlists SET ?', torlists, function (error, results, fields) {
+                    //     if (error) throw error;
+                    // // console.log(fields);
+                    // });
+                    
+                    var torlist = [parsedTorrent.infoHash, parsedTorrent.name, filelist];
+                    torlistarr.push(torlist);
+                    console.log(metadata.infohash + " has saved.");
+                    console.log(torlistarr.length);
+
+                    // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
+                    if (torlistarr.length === 300) {
+                        var query = connection.query('INSERT INTO torlists(ID,NAME,FILES) VALUES ?', [torlistarr], function (error, rows, fields) {
+                            if (error) throw error;
+                            torlistarr = [];
+                        });
+                    }
+                } else {
+                    // 删除非以上5种类型的文件
+                    fs.unlink(torrentFilePathSaveTo, function (error) {
                         if (error) throw error;
-                        torlistsarr = [];
                     });
                 }
-            }else{
-                // 删除非以上8种类型的文件
-                fs.unlink(torrentFilePathSaveTo,function(error){
-                    if(error) throw error;
-                });
             }
-        }
+        } 
     });
 });
 
