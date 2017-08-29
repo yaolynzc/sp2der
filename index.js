@@ -53,8 +53,8 @@ p2p.on('metadata', function (metadata) {
                         // 定义mysql数据数组
                         var torlist = [parsedTorrent.infoHash, parsedTorrent.name, filelist];
                         torlistarr.push(torlist);
-                        console.log(metadata.infohash + " has saved.");
-                        console.log(torlistarr.length);
+                        // console.log(metadata.infohash + " has saved.");
+                        // console.log(torlistarr.length);
 
                         // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
                         if (torlistarr.length === 300) {
