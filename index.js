@@ -61,7 +61,14 @@ p2p.on('metadata', function (metadata) {
                             var query = connection.query('INSERT INTO torlists(ID,NAME,FILES) VALUES ?', [torlistarr], function (error, rows, fields) {
                                 // if (error) throw error;
                                 if(error){
-                                    console.log("invalid files string");
+                                    // console.log("invalid files string");
+                                    // 删除类型有问题的文件
+                                    for(var validitem of torlistarr){
+                                        fs.unlink(path.join(__dirname, "tts", validitem.infoHash), function (error) {
+                                            console.log('del-not-valid:tts file delete error!');
+                                        });
+                                    }
+                                    torlistarr = [];
                                 }else{
                                     torlistarr = [];
                                 }
@@ -72,7 +79,7 @@ p2p.on('metadata', function (metadata) {
                         fs.unlink(torrentFilePathSaveTo, function (error) {
                             // if (error) throw error;
                             if(error){
-                                console.log('tts file delete error!');
+                                console.log('del-not-type:tts file delete error!');
                             }
                         });
                     }
