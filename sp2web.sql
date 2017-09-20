@@ -25,12 +25,19 @@ DROP TABLE IF EXISTS `torlists`;
 CREATE TABLE `torlists` (
   `NID` int(11) NOT NULL AUTO_INCREMENT,
   `ID` varchar(50) DEFAULT NULL,
-  `NAME` varchar(500) DEFAULT NULL,
-  `FILES` longtext,
+  `NAME` varchar(1000) DEFAULT NULL,
   `CTIME` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`NID`)
-) ENGINE=InnoDB AUTO_INCREMENT=181 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping events for database 'sp2web'
+--
+
+--
+-- Dumping routines for database 'sp2web'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -41,4 +48,4 @@ CREATE TABLE `torlists` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-08-29 11:45:36
+-- Dump completed on 2017-09-20 16:54:33

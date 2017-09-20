@@ -51,14 +51,14 @@ p2p.on('metadata', function (metadata) {
                     // 如果包含以上5种文件类型，则保存
                     if (videoRegEx.test(filelist)) {
                         // 定义mysql数据数组
-                        var torlist = [parsedTorrent.infoHash, parsedTorrent.name, filelist];
+                        var torlist = [parsedTorrent.infoHash, parsedTorrent.name];
                         torlistarr.push(torlist);
                         // console.log(metadata.infohash + " has saved.");
                         // console.log(torlistarr.length);
 
                         // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
                         if (torlistarr.length === 300) {
-                            var query = connection.query('INSERT INTO torlists(ID,NAME,FILES) VALUES ?', [torlistarr], function (error, rows, fields) {
+                            var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
                                 // if (error) throw error;
                                 if(error){
                                     // console.log("invalid files string");
