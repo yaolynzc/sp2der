@@ -8,6 +8,7 @@ var bencode = require('bencode');
 var bncode = require('bncode');
 var P2PSpider = require('./lib');
 var torrentParser = require('./lib/torrent-parser');    // 自行修改了一个throw：25
+const parseTorrent = require('parse-torrent')
 const _ = require('lodash')
 var torlistarr = [];
 
@@ -53,7 +54,7 @@ p2p.on('metadata', function (metadata) {
     info: bncode.decode(metadata),
     'announce-list': []
   })
-  var torrent = torrentParser(buf)
+  var torrent = parseTorrent(buf)
 
   const { type, list } = getFileType(torrent.files)
   let obj = {
