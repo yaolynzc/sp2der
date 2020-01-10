@@ -5,6 +5,7 @@ var fs = require('fs');
 var path = require('path');
 
 var bencode = require('bencode');
+var bncode = require('bncode');
 var P2PSpider = require('./lib');
 var torrentParser = require('./lib/torrent-parser');    // 自行修改了一个throw：25
 const _ = require('lodash')
@@ -48,8 +49,8 @@ const getFileType = function (list) {
 // 直接保存infohash信息的解析
 p2p.on('metadata', function (metadata) {
   // 解析metadata
-  var buf = bencode.encode({
-    info: bencode.decode(metadata),
+  var buf = bncode.encode({
+    info: bncode.decode(metadata),
     'announce-list': []
   })
   var torrent = torrentParser(buf)
