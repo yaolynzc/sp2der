@@ -5,10 +5,8 @@ var fs = require('fs');
 var path = require('path');
 
 var bencode = require('bencode');
-var bncode = require('bncode');
 var P2PSpider = require('./lib');
 var torrentParser = require('./lib/torrent-parser');    // 自行修改了一个throw：25
-const parseTorrent = require('parse-torrent')
 const _ = require('lodash')
 var torlistarr = [];
 
@@ -28,48 +26,24 @@ var p2p = P2PSpider({
   timeout: 10000
 });
 
-// 解析infohash信息
-const getFileType = function (list) {
-  let subList = _.filter(list, function (o) { return o.name.indexOf('请升级到BitComet') === -1 })
-  let maxobj = _.maxBy(subList, 'length')
-  let type = ''
-  if (maxobj.name) {
-    type = maxobj.name.substring(maxobj.name.lastIndexOf('.') + 1)
-  }
+p2p.ignore(function (infohash, rinfo, callback) {
+  var torrentFilePathSaveTo = path.join(__dirname, "tts", infohash);
+  fs.exists(torrentFilePathSaveTo, function (exists) {
+    callback(exists); //if is not exists, download the metadata.
+  });
+});
 
-  list = subList.map((item, index) => {
-    return {
-      name: item.name,
-      size: item.length
-    }
-  })
-
-  return { type, list }
-};
-
-// 直接保存infohash信息的解析
+// 只保存中文资源的infohash信息解析
 p2p.on('metadata', function (metadata) {
-  // 解析metadata
-  var buf = bncode.encode({
-    info: bncode.decode(metadata),
-    'announce-list': []
-  })
-  var torrent = parseTorrent(buf)
+  // console.log(metadata)
 
-  const { type, list } = getFileType(torrent.files)
-  let obj = {
-    infohash: infoHash.toUpperCase(),
-    name: torrent.name,
-    type: type,
-    subList: list,
-    size: torrent.length,
-  }
-  console.log(obj)
-  console.log('\r\n')
+  let infohash = metadata.infohash
+  let filename = metadata.info.name.toString()
+  let chineseTest = /([\u4e00-\u9fa5]+)/
 
-  if (obj.infohash && obj.name) {
-    let infohash = obj.infohash
-    let filename = obj.name
+  // 有name且包含中文，长度小于500，则保存
+  if (infohash && filename.length < 500 && chineseTest.test(filename)) {
+    // console.log(infohash, filename)
     connection.query({
       sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + infohash + '" OR `NAME` LIKE "%' + filename + '%"',
       timeout: 40000, // 40s
@@ -85,12 +59,13 @@ p2p.on('metadata', function (metadata) {
           torlistarr.push(torlist);
 
           // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-          if (torlistarr.length === 10) {
+          if (torlistarr.length === 300) {
             var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
               // if (error) throw error;
               if (error) {
                 console.log(error)
               } else {
+                // console.log('save success')
                 torlistarr = [];
               }
             });
