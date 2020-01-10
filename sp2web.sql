@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 5.7.12, for Win64 (x86_64)
 --
--- Host: 116.196.74.122    Database: sp2web
+-- Host: 127.0.0.1    Database: sp2web
 -- ------------------------------------------------------
--- Server version	5.7.19
+-- Server version	5.7.26
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -25,9 +25,10 @@ DROP TABLE IF EXISTS `torlists`;
 CREATE TABLE `torlists` (
   `NID` int(11) NOT NULL AUTO_INCREMENT,
   `ID` varchar(50) DEFAULT NULL,
-  `NAME` varchar(1000) DEFAULT NULL,
+  `NAME` varchar(500) DEFAULT NULL,
   `CTIME` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`NID`)
+  PRIMARY KEY (`NID`),
+  KEY `idx_torlists_NAME` (`NAME`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -48,4 +49,4 @@ CREATE TABLE `torlists` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2017-09-20 16:54:33
+-- Dump completed on 2020-01-10 15:12:55
