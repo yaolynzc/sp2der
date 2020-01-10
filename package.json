@@ -14,6 +14,7 @@
   "dependencies": {
     "bencode": "^0.7.0",
     "bitfield": "^1.1.2",
+    "lodash": "^4.17.15",
     "mongoose": "^4.11.6",
     "mysql": "^2.14.1",
     "redis": "^2.8.0",

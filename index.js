@@ -7,6 +7,7 @@ var path = require('path');
 var bencode = require('bencode');
 var P2PSpider = require('./lib');
 var torrentParser = require('./lib/torrent-parser');    // 自行修改了一个throw：25
+const _ = require('lodash')
 var torlistarr = [];
 
 // 1.引入mysql模块
@@ -25,43 +26,74 @@ var p2p = P2PSpider({
   timeout: 10000
 });
 
-p2p.ignore(function (infohash, rinfo, callback) {
-  var torrentFilePathSaveTo = path.join(__dirname, "tts", infohash);
-  fs.exists(torrentFilePathSaveTo, function (exists) {
-    callback(exists); //if is not exists, download the metadata.
-  });
-});
+// 解析infohash信息
+const getFileType = function (list) {
+  let subList = _.filter(list, function (o) { return o.name.indexOf('请升级到BitComet') === -1 })
+  let maxobj = _.maxBy(subList, 'length')
+  let type = ''
+  if (maxobj.name) {
+    type = maxobj.name.substring(maxobj.name.lastIndexOf('.') + 1)
+  }
+
+  list = subList.map((item, index) => {
+    return {
+      name: item.name,
+      size: item.length
+    }
+  })
+
+  return { type, list }
+};
 
 // 直接保存infohash信息的解析
 p2p.on('metadata', function (metadata) {
-  if (metadata.infohash && metadata.info.name) {
-    var filenamne = metadata.info.name.toString()
+  // 解析metadata
+  var buf = bencode.encode({
+    info: bencode.decode(metadata),
+    'announce-list': []
+  })
+  var torrent = torrentParser(buf)
+
+  const { type, list } = getFileType(torrent.files)
+  let obj = {
+    infohash: infoHash.toUpperCase(),
+    name: torrent.name,
+    type: type,
+    subList: list,
+    size: torrent.length,
+  }
+  console.log(obj)
+  console.log('\r\n')
+
+  if (obj.infohash && obj.name) {
+    let infohash = obj.infohash
+    let filename = obj.name
     connection.query({
-      sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + metadata.infohash + '" OR `NAME` LIKE "%' + filenamne + '%"',
+      sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + infohash + '" OR `NAME` LIKE "%' + filename + '%"',
       timeout: 40000, // 40s
     }, function (error, results, fields) {
       if (error) {
         console.log(error);
       } else {
         // console.log(torlistarr.length)
+        // 数据库中未查询到类似信息
         if (results.length == 0) {
-          if (metadata.info.name) {
-            // 定义mysql数据数组
-            var torlist = [metadata.infohash, metadata.info.name.toString()];
-            torlistarr.push(torlist);
+          // 定义mysql数据数组
+          var torlist = [infohash, filename];
+          torlistarr.push(torlist);
 
-            // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-            if (torlistarr.length === 300) {
-              var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
-                // if (error) throw error;
-                if (error) {
-                  console.log(error)
-                } else {
-                  torlistarr = [];
-                }
-              });
-            }
+          // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
+          if (torlistarr.length === 10) {
+            var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
+              // if (error) throw error;
+              if (error) {
+                console.log(error)
+              } else {
+                torlistarr = [];
+              }
+            });
           }
+
         }
       }
     });
