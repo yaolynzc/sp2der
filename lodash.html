@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>Document</title>
+</head>
+
+<body>
+	<script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+	<script>
+		var torlistarr = [["111", "name1"], ["222", "name2"], ["333", "name3"]]
+		var testnull = []
+		console.log(_.indexOf(_.flatten(testnull), "222"))
+		var torlistarr1 = _.flatten(torlistarr)
+		console.log(torlistarr1)
+		console.log(_.indexOf(torlistarr1, "222"))
+		// console.log(_.indexOf(torlistarr, function (o) { return o == "222"; }));
+		// _.forEach(torlistarr, function (value) {
+		// 	console.log(value);
+		// })
+	</script>
+</body>
+
+</html>

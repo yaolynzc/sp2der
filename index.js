@@ -14,67 +14,73 @@ var torlistarr = [];
 var mysql = require('mysql');
 // 2.设置mysql连接参数
 var connection = mysql.createConnection({
-  host: '127.0.0.1',
-  user: 'root',
-  password: '*36801589!Fla#',
-  database: 'sp2web'
+	host: '127.0.0.1',
+	user: 'root',
+	password: '*36801589!Fla#',
+	database: 'sp2web'
 });
 
 var p2p = P2PSpider({
-  nodesMaxSize: 400,
-  maxConnections: 800,
-  timeout: 10000
+	nodesMaxSize: 400,
+	maxConnections: 800,
+	timeout: 10000
 });
 
 p2p.ignore(function (infohash, rinfo, callback) {
-  var torrentFilePathSaveTo = path.join(__dirname, "tts", infohash);
-  fs.exists(torrentFilePathSaveTo, function (exists) {
-    callback(exists); //if is not exists, download the metadata.
-  });
+	var torrentFilePathSaveTo = path.join(__dirname, "tts", infohash);
+	fs.exists(torrentFilePathSaveTo, function (exists) {
+		callback(exists); //if is not exists, download the metadata.
+	});
 });
 
 // 只保存中文资源的infohash信息解析
 p2p.on('metadata', function (metadata) {
-  // console.log(metadata)
+	// console.log(metadata)
 
-  let infohash = metadata.infohash
-  let filename = metadata.info.name.toString()
-  let chineseTest = /([\u4e00-\u9fa5]+)/
+	let infohash = metadata.infohash
+	let filename = metadata.info.name.toString()
+	let chineseTest = /([\u4e00-\u9fa5]+)/
 
-  // 有name且包含中文，长度小于500，则保存
-  if (infohash && filename.length < 500 && chineseTest.test(filename)) {
-    // console.log(infohash, filename)
-    connection.query({
-      sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + infohash + '" OR `NAME` LIKE "%' + filename + '%"',
-      timeout: 40000, // 40s
-    }, function (error, results, fields) {
-      if (error) {
-        console.log(error);
-      } else {
-        // console.log(torlistarr.length)
-        // 数据库中未查询到类似信息
-        if (results.length == 0) {
-          // 定义mysql数据数组
-          var torlist = [infohash, filename];
-          torlistarr.push(torlist);
+	// 有name且包含中文，长度小于500，则保存
+	if (infohash && filename.length < 500 && chineseTest.test(filename)) {
+		// console.log(infohash, filename)
+		connection.query({
+			sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + infohash + '" OR `NAME` LIKE "%' + filename + '%"',
+			timeout: 40000, // 40s
+		}, function (error, results, fields) {
+			if (error) {
+				console.log(error);
+			} else {
+				// console.log(torlistarr.length)
+				// 数据库中未查询到类似信息
+				if (results.length == 0) {
+					// 在当前内存变量torlistarr中再次查找，不存在时才保存信息
+					var torlistarr1 = _.flatten(torlistarr)
+					var existsInfohash = _.indexOf(torlistarr1, infohash)
+					var existsFilename = _.indexOf(torlistarr1, filename)
+					if (existsInfohash < 0 && existsFilename < 0) {
+						// 定义mysql数据数组
+						var torlist = [infohash, filename];
+						torlistarr.push(torlist);
+					}
 
-          // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-          if (torlistarr.length === 300) {
-            var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
-              // if (error) throw error;
-              if (error) {
-                console.log(error)
-              } else {
-                // console.log('save success')
-                torlistarr = [];
-              }
-            });
-          }
+					// 匹配到300个文件时才执行批量保存到后台mysql数据库操作
+					if (torlistarr.length === 300) {
+						var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
+							// if (error) throw error;
+							if (error) {
+								console.log(error)
+							} else {
+								// console.log('save success')
+								torlistarr = [];
+							}
+						});
+					}
 
-        }
-      }
-    });
-  }
+				}
+			}
+		});
+	}
 })
 
 // 保存torrent文件的解析操作
