@@ -141,4 +141,9 @@ p2p.on('metadata', function (metadata) {
 //   });
 // });
 
+// 全局捕获nodejs异常防止程序退出
+process.on('uncaughtException', function (err) {
+  console.log(err);
+})
+
 p2p.listen(6881, '0.0.0.0');
