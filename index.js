@@ -62,6 +62,9 @@ p2p.on('metadata', function (metadata) {
             // 定义mysql数据数组
             var torlist = [infohash, filename];
             torlistarr.push(torlist);
+
+            // 信息写入日志文件
+            fs.writeFile('./sp2der.log', `${new Date().toLocaleString()}\t${torlistarr.length}\t${infohash}\t${filename}`)
           }
 
           // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
