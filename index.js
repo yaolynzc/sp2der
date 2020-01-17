@@ -64,7 +64,7 @@ p2p.on('metadata', function (metadata) {
             torlistarr.push(torlist);
 
             // 信息写入日志文件
-            fs.writeFile('./sp2der.log', `${new Date().toLocaleString()}\t${torlistarr.length}\t${infohash}\t${filename}`, function (err) {
+            fs.writeFile('./sp2der.log', `${new Date().toLocaleString('chinese', { hour12: false })}\t${torlistarr.length}\t${infohash}\t${filename}`, function (err) {
               if (err) {
                 console.log('write log fail')
               }
