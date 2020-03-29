@@ -72,7 +72,7 @@ p2p.on('metadata', function (metadata) {
           }
 
           // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-          if (torlistarr.length === 300) {
+          if (torlistarr.length >= 300) {
             var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
               // if (error) throw error;
               if (error) {
@@ -83,7 +83,6 @@ p2p.on('metadata', function (metadata) {
               }
             });
           }
-
         }
       }
     });
