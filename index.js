@@ -45,7 +45,7 @@ p2p.on('metadata', function (metadata) {
   if (infohash && filename && filename.length < 500 && chineseTest.test(filename)) {
     // console.log(infohash, filename)
     connection.query({
-      sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + infohash + '" OR `NAME` LIKE "%' + filename + '%"',
+      sql: 'SELECT ID FROM `torlists` WHERE `ID` = "' + infohash + '"',
       timeout: 40000, // 40s
     }, function (error, results, fields) {
       if (error) {
@@ -72,15 +72,14 @@ p2p.on('metadata', function (metadata) {
           }
 
           // 匹配到300个文件时才执行批量保存到后台mysql数据库操作
-          if (torlistarr.length >= 300) {
+          if (torlistarr.length === 100) {
             var query = connection.query('INSERT INTO torlists(ID,NAME) VALUES ?', [torlistarr], function (error, rows, fields) {
               // if (error) throw error;
               if (error) {
                 console.log(error)
-              } else {
-                // console.log('save success')
-                torlistarr = [];
               }
+              // 无论保存成功还是失败，都清空数组
+              torlistarr = [];
             });
           }
         }
